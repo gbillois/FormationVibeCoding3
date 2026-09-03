@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cyber Snake // Skills Validation</title>
+  <style>
+    :root { --ink:#eefbf4; --muted:#87a397; --green:#52ff9a; --lime:#c7ff4d; --red:#ff6f7d; --panel:#0d1715; --line:#24433a; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); background:#07100e; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; overflow-x:hidden; }
+    body::before { content:""; position:fixed; inset:0; pointer-events:none; background:linear-gradient(rgba(82,255,154,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(82,255,154,.025) 1px,transparent 1px); background-size:32px 32px; mask-image:linear-gradient(to bottom,#000,transparent 80%); }
+    .shell { width:min(1100px,94vw); margin:auto; min-height:100vh; display:grid; grid-template-rows:auto 1fr auto; gap:24px; padding:28px 0 20px; }
+    header { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:18px; }
+    .brand { display:flex; gap:13px; align-items:center; text-transform:uppercase; letter-spacing:.09em; font-weight:800; }
+    .brand-mark { width:34px;height:34px;border:1px solid var(--green);display:grid;place-items:center;color:var(--green);box-shadow:inset 0 0 16px #52ff9a22; }
+    .brand small { display:block;color:var(--muted);font-size:10px;letter-spacing:.18em;margin-top:4px; }
+    .status { color:var(--green);font-size:12px;display:flex;gap:9px;align-items:center; }
+    .pulse { width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 1.5s infinite; }
+    @keyframes pulse { 50% { opacity:.35; } }
+    main { display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:24px;align-items:center; }
+    .game-panel { border:1px solid var(--line);background:rgba(13,23,21,.9);padding:12px;box-shadow:0 24px 70px #0008; }
+    .screen-bar { height:38px;display:flex;align-items:center;justify-content:space-between;padding:0 7px;font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase; }
+    .screen-bar b { color:var(--green); }
+    .canvas-wrap { position:relative;aspect-ratio:1.65/1;background:#08110f;overflow:hidden; }
+    canvas { width:100%;height:100%;display:block; }
+    .scanlines { position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 3px,#0002 4px); }
+    .start-screen { position:absolute;inset:0;display:grid;place-items:center;background:#07100ed9;text-align:center;padding:30px; }
+    .start-screen.hidden { display:none; }
+    .start-screen h1 { margin:0;color:var(--green);font-size:clamp(30px,5vw,62px);line-height:.9;letter-spacing:-.08em;text-shadow:0 0 25px #52ff9a44; }
+    .start-screen p { color:var(--muted);max-width:440px;line-height:1.6;font-size:13px;margin:22px auto; }
+    button { font:inherit; }
+    .primary { border:0;background:var(--green);color:#06100c;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:14px 24px;cursor:pointer;box-shadow:5px 5px 0 #1f6e49; }
+    .primary:hover { background:var(--lime);transform:translate(-1px,-1px); }
+    aside { display:flex;flex-direction:column;gap:15px; }
+    .card { border:1px solid var(--line);background:rgba(13,23,21,.8);padding:20px; }
+    .eyebrow { color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.17em;margin-bottom:10px; }
+    .score { font-size:42px;font-weight:900;color:var(--green);line-height:1; }
+    .score span { color:#38574d;font-size:20px; }
+    .progress { height:5px;background:#1a2d27;margin-top:14px; }
+    .progress i { display:block;height:100%;width:0;background:var(--green);box-shadow:0 0 10px #52ff9a88;transition:width .25s; }
+    .domain { display:flex;justify-content:space-between;border-top:1px solid #1b332c;padding:10px 0;color:var(--muted);font-size:11px; }
+    .domain:last-child { padding-bottom:0; }.domain b{color:var(--ink)}
+    .instructions { line-height:1.6;color:var(--muted);font-size:11px; }
+    kbd { border:1px solid #35594e;background:#111f1b;color:var(--ink);padding:2px 5px; }
+    .controls { display:none;grid-template-columns:repeat(3,48px);justify-content:center;gap:5px;margin-top:10px; }
+    .controls button { height:43px;border:1px solid var(--line);background:#10201b;color:var(--green);font-size:18px;touch-action:manipulation; }
+    .controls .up{grid-column:2}.controls .left{grid-column:1}.controls .down{grid-column:2}.controls .right{grid-column:3}
+    footer { border-top:1px solid var(--line);padding-top:16px;color:#587267;font-size:10px;display:flex;justify-content:space-between;text-transform:uppercase;letter-spacing:.08em; }
+    dialog { width:min(650px,92vw);padding:0;border:1px solid #376050;background:#0c1714;color:var(--ink);box-shadow:0 30px 100px #000; }
+    dialog::backdrop { background:#030806dd;backdrop-filter:blur(5px); }
+    .modal-head { border-bottom:1px solid var(--line);padding:16px 22px;display:flex;justify-content:space-between;color:var(--green);font-size:11px;text-transform:uppercase;letter-spacing:.15em; }
+    .modal-body { padding:25px; }
+    .tag { display:inline-block;padding:5px 8px;border:1px solid #2d5547;color:var(--green);font-size:10px;margin-bottom:14px; }
+    #questionText { font-family:system-ui,sans-serif;font-size:20px;line-height:1.35;margin:0 0 22px; }
+    .answers { display:grid;gap:10px; }
+    .answer { text-align:left;border:1px solid #29483e;background:#111f1b;color:var(--ink);padding:14px 16px;cursor:pointer;line-height:1.35; }
+    .answer:hover:not(:disabled) { border-color:var(--green);background:#142a22; }
+    .answer.correct { border-color:var(--green);background:#123322;color:var(--green); }.answer.wrong { border-color:var(--red);background:#32171a;color:#ffabb3; }
+    .feedback { min-height:38px;color:var(--muted);font-size:12px;line-height:1.5;margin-top:15px; }
+    .result { text-align:center;padding:36px 25px; }.result h2{color:var(--green);font-size:30px;margin:5px}.result .big{font-size:68px;font-weight:900}.result p{color:var(--muted);line-height:1.6}.result.fail h2{color:var(--lime)}
+    @media(max-width:780px){ main{grid-template-columns:1fr;align-items:start}.shell{padding-top:15px}.controls{display:grid}aside{display:grid;grid-template-columns:1fr 1fr}.instructions{display:none}.canvas-wrap{aspect-ratio:1.25}footer{display:none} }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header><div class="brand"><div class="brand-mark">⌁</div><div>Cyber Snake<small>Academy Skills Validation</small></div></div><div class="status"><i class="pulse"></i><span id="systemStatus">SYSTEM READY</span></div></header>
+    <main>
+      <section class="game-panel">
+        <div class="screen-bar"><span>Training simulation // grid 28×18</span><span>Packets: <b id="packets">00</b>/10</span></div>
+        <div class="canvas-wrap"><canvas id="game" width="840" height="540" aria-label="Snake game board"></canvas><div class="scanlines"></div>
+          <div class="start-screen" id="startScreen"><div><div class="eyebrow">// Assessment protocol</div><h1>THINK.<br>MOVE. DEFEND.</h1><p>Collect 10 data packets. Each packet triggers a randomly selected security challenge. Navigate with arrow keys or WASD.</p><button class="primary" id="startBtn">Initialize run →</button></div></div>
+        </div>
+        <div class="controls" aria-label="Touch controls"><button class="up" data-dir="up">↑</button><button class="left" data-dir="left">←</button><button class="down" data-dir="down">↓</button><button class="right" data-dir="right">→</button></div>
+      </section>
+      <aside>
+        <div class="card"><div class="eyebrow">Validated answers</div><div class="score"><b id="score">00</b><span> / 10</span></div><div class="progress"><i id="progress"></i></div></div>
+        <div class="card"><div class="eyebrow">Question domains</div><div class="domain"><span>IAM</span><b>Identity</b></div><div class="domain"><span>GRC</span><b>Risk</b></div><div class="domain"><span>SOC</span><b>Defense</b></div><div class="domain"><span>AI</span><b>Security</b></div></div>
+        <div class="card instructions"><div class="eyebrow">Operator guide</div><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or <kbd>WASD</kbd><br>Walls and your own trail terminate the run. Questions do not have a time limit.</div>
+      </aside>
+    </main>
+    <footer><span>Academy simulator v1.0</span><span>10 challenges // pass threshold: 9</span></footer>
+  </div>
+  <dialog id="quiz" aria-labelledby="questionText"><div id="quizContent"><div class="modal-head"><span>Security checkpoint</span><span id="questionNo">01 / 10</span></div><div class="modal-body"><div class="tag" id="category">IAM</div><h2 id="questionText"></h2><div class="answers" id="answers"></div><div class="feedback" id="feedback"></div></div></div></dialog>
+  <script>
+    const bank = [
+      ['IAM','What is the strongest default control for privileged administrator access?',['A long, unique password changed quarterly','Password plus a security question','Phishing-resistant MFA using a hardware security key'],2,'Hardware-backed, phishing-resistant MFA best protects privileged authentication.'],
+      ['IAM','Which principle gives users only the access required for their current job?',['Least privilege','Role accumulation with annual cleanup','Access based on seniority'],0,'Least privilege limits permissions to what is necessary.'],
+      ['IAM','What should happen first when an employee leaves the company?',['Archive their mailbox and review it next month','Immediately disable access and active sessions','Change only their VPN password'],1,'Prompt deprovisioning closes all access paths and active sessions.'],
+      ['IAM','Which model assigns permissions according to job functions?',['Discretionary access using shared accounts','Role-based access control (RBAC)','A spreadsheet of manager preferences'],1,'RBAC maps permissions to defined organizational roles.'],
+      ['IAM','What is identity federation?',['Trusting another identity provider to authenticate users','Synchronizing the same password to every application','Allowing all partner users into the internal network'],0,'Federation relies on trusted identity assertions across domains.'],
+      ['IAM','Why perform periodic access reviews?',['To confirm access is still appropriate and remove excess rights','To rotate every username on a schedule','To ensure all employees have matching permissions'],0,'Reviews detect stale, excessive, or inappropriate entitlements.'],
+      ['IAM','What does segregation of duties primarily reduce?',['The number of authentication prompts','The risk one person can complete a sensitive process alone','The need to log administrator activity'],1,'Splitting critical tasks reduces fraud and error risk.'],
+      ['IAM','Where should non-human account secrets be kept?',['In source code with repository access controls','In an encrypted secrets manager with rotation','In a private team chat message'],1,'A secrets manager enables controlled retrieval, auditing, and rotation.'],
+      ['GRC','What is the purpose of a risk register?',['To track identified risks, owners, treatments, and status','To store every security alert indefinitely','To list only risks that have already caused incidents'],0,'A risk register provides accountable, ongoing risk tracking.'],
+      ['GRC','Residual risk is the risk that remains…',['Before any controls are considered','After controls and treatments are applied','Only after a data breach is public'],1,'Residual risk remains after treatment; inherent risk exists before controls.'],
+      ['GRC','Who should formally accept a material business risk?',['The system administrator who discovered it','The accountable business risk owner','Any analyst on the security team'],1,'The accountable owner accepts risk within delegated authority.'],
+      ['GRC','What best demonstrates that a control is effective?',['The policy says the control must exist','The control owner says it usually works','Repeatable testing produces evidence that it operates as intended'],2,'Effectiveness requires objective, repeatable evidence.'],
+      ['GRC','A vendor will process sensitive customer data. What should happen first?',['Perform risk-based due diligence before onboarding','Trust its marketing security badge','Wait for the first annual renewal'],0,'Due diligence should precede access to sensitive data.'],
+      ['GRC','What is the primary role of a security policy?',['Provide high-level management direction and requirements','Document every command used by administrators','Replace technical controls with written rules'],0,'Policy establishes management intent and mandatory direction.'],
+      ['GRC','Which metric is most useful to executives?',['Total raw log lines collected','Risk reduction and exposure trends tied to business objectives','Number of firewall rules'],1,'Business-aligned risk trends support governance decisions.'],
+      ['GRC','Why classify information?',['To apply protection based on sensitivity and business impact','To make every file confidential','To eliminate the need for retention rules'],0,'Classification enables proportionate handling and protection.'],
+      ['SOC','An endpoint triggers a confirmed malware alert. What is the immediate priority?',['Contain the affected host while preserving evidence','Delete all logs to stop propagation','Publish the incident details externally'],0,'Containment limits harm while evidence supports investigation.'],
+      ['SOC','What does a SIEM primarily enable?',['Centralized log analysis and security event correlation','Automatic repair of every vulnerable application','Replacement of endpoint security controls'],0,'A SIEM aggregates and correlates telemetry for detection and investigation.'],
+      ['SOC','What is a detection false positive?',['Benign activity incorrectly flagged as malicious','Malicious activity missed by a rule','An alert confirmed as a real attack'],0,'A false positive is a benign event mistakenly detected as malicious.'],
+      ['SOC','Why keep an incident response playbook?',['To prescribe repeatable roles and actions for common incidents','To guarantee incidents never happen','To avoid documenting response decisions'],0,'Playbooks improve consistent and coordinated response.'],
+      ['SOC','Which source is most useful for investigating suspicious sign-ins?',['Authentication logs with time, source, and outcome','A list of employee birthdays','Public website uptime data'],0,'Authentication telemetry provides evidence of sign-in activity.'],
+      ['SOC','What does mean time to contain measure?',['Time from detection until spread or impact is limited','Time between employee security courses','Time required to purchase a new tool'],0,'MTTC tracks response speed in limiting an incident.'],
+      ['SOC','Threat hunting is best described as…',['Proactively testing hypotheses to find hidden threats','Waiting for high-severity alerts only','Scanning public news for product launches'],0,'Hunting proactively searches telemetry for undetected adversary behavior.'],
+      ['SOC','Why synchronize clocks across security systems?',['To correlate events accurately across data sources','To reduce the volume of generated logs','To encrypt network traffic'],0,'Consistent timestamps are essential for reconstructing timelines.'],
+      ['AI Security','What is prompt injection?',['Input designed to manipulate an AI system into ignoring intended instructions','Encrypting prompts before they reach a model','A method for improving model response speed'],0,'Prompt injection attempts to override or subvert intended behavior.'],
+      ['AI Security','How should an AI assistant handle untrusted retrieved content?',['Treat it as data, isolate it, and enforce system-level controls','Follow every instruction contained in the retrieved text','Block all retrieval permanently'],0,'Retrieved content must not be trusted as governing instructions.'],
+      ['AI Security','What reduces sensitive-data leakage to public AI tools?',['Clear usage policy, data controls, and approved enterprise tooling','Asking users to delete chats once a year','Renaming confidential files before upload'],0,'Layered policy, technical controls, and approved tools reduce exposure.'],
+      ['AI Security','Why red-team an AI application?',['To identify exploitable failure modes before adversaries do','To prove the model will never make mistakes','To increase the size of its training dataset'],0,'Adversarial testing reveals weaknesses and informs mitigations.'],
+      ['AI Security','What is model supply-chain risk?',['Risk from compromised models, datasets, libraries, or deployment artifacts','The cost of purchasing additional GPUs','A model producing a long answer'],0,'AI systems inherit risk from models, data, dependencies, and artifacts.'],
+      ['AI Security','What is the safest approach to AI-generated code?',['Review, test, and scan it before use','Deploy it directly if it compiles','Trust it when the explanation sounds confident'],0,'Generated code requires the same or stronger assurance as other code.']
+    ];
+    const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d'),quiz=document.querySelector('#quiz');
+    const grid={cols:28,rows:18,size:30}; let snake,dir,nextDir,food,timer,selected,index,correct,running;
+    const shuffle=a=>{for(let i=a.length-1;i;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+    function reset(){snake=[{x:7,y:9},{x:6,y:9},{x:5,y:9}];dir={x:1,y:0};nextDir={...dir};index=0;correct=0;selected=shuffle([...bank]).slice(0,10);running=true;updateUI();spawnFood();draw();clearInterval(timer);timer=setInterval(tick,125);}
+    function spawnFood(){do{food={x:Math.floor(Math.random()*grid.cols),y:Math.floor(Math.random()*grid.rows)}}while(snake.some(p=>p.x===food.x&&p.y===food.y));}
+    function tick(){if(!running)return;dir=nextDir;const head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};if(head.x<0||head.y<0||head.x>=grid.cols||head.y>=grid.rows||snake.some(p=>p.x===head.x&&p.y===head.y)){endRun(false);return}snake.unshift(head);if(head.x===food.x&&head.y===food.y){running=false;draw();showQuestion()}else snake.pop();draw();}
+    function draw(){ctx.fillStyle='#08110f';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.strokeStyle='#13261f';ctx.lineWidth=1;for(let x=0;x<=canvas.width;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke()}for(let y=0;y<=canvas.height;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke()}if(food){ctx.fillStyle='#c7ff4d';ctx.shadowColor='#c7ff4d';ctx.shadowBlur=16;ctx.fillRect(food.x*30+8,food.y*30+8,14,14);ctx.shadowBlur=0}snake?.forEach((p,i)=>{ctx.fillStyle=i?'#2bd978':'#78ffac';ctx.fillRect(p.x*30+3,p.y*30+3,24,24);if(i===0){ctx.fillStyle='#07100e';ctx.fillRect(p.x*30+(dir.y?8:dir.x>0?19:7),p.y*30+(dir.x?8:dir.y>0?19:7),4,4)}});}
+    function showQuestion(){const q=selected[index];document.querySelector('#questionNo').textContent=String(index+1).padStart(2,'0')+' / 10';document.querySelector('#category').textContent=q[0];document.querySelector('#questionText').textContent=q[1];document.querySelector('#feedback').textContent='Select the best answer to continue.';const box=document.querySelector('#answers');box.innerHTML='';q[2].forEach((a,i)=>{const b=document.createElement('button');b.className='answer';b.textContent=String.fromCharCode(65+i)+'  '+a;b.onclick=()=>answer(i,b);box.append(b)});quiz.showModal();document.querySelector('#systemStatus').textContent='CHECKPOINT ACTIVE';}
+    function answer(choice,button){const q=selected[index];document.querySelectorAll('.answer').forEach((b,i)=>{b.disabled=true;if(i===q[3])b.classList.add('correct')});if(choice===q[3]){correct++;document.querySelector('#feedback').textContent='✓ Correct. '+q[4]}else{button.classList.add('wrong');document.querySelector('#feedback').textContent='✕ Not quite. '+q[4]}index++;updateUI();setTimeout(()=>{quiz.close();snake.pop();if(index===10)endRun(true);else{spawnFood();running=true;document.querySelector('#systemStatus').textContent='SYSTEM ACTIVE'}},1500)}
+    function updateUI(){document.querySelector('#packets').textContent=String(index).padStart(2,'0');document.querySelector('#score').textContent=String(correct).padStart(2,'0');document.querySelector('#progress').style.width=(index*10)+'%';}
+    function endRun(completed){running=false;clearInterval(timer);const pass=completed&&correct>8;document.querySelector('#quizContent').innerHTML=`<div class="result ${pass?'':'fail'}"><div class="eyebrow">// ${completed?'Assessment complete':'Simulation interrupted'}</div><div class="big">${correct}/${completed?10:index}</div><h2>${pass?'Skills validated':completed?'Keep training':'Connection terminated'}</h2><p>${pass?'Excellent work. You demonstrated strong cyber defense judgment.':completed?'Score 9 or 10 to validate your skills. Review the explanations and try again.':'The snake hit a boundary or its own trail. Your completed answers were saved for this run.'}</p><button class="primary" id="restart">Run assessment again →</button></div>`;if(!quiz.open)quiz.showModal();document.querySelector('#restart').onclick=()=>location.reload();document.querySelector('#systemStatus').textContent=pass?'VALIDATION PASSED':'RUN COMPLETE';}
+    function steer(d){const dirs={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}},n=dirs[d];if(n&&!(n.x===-dir.x&&n.y===-dir.y))nextDir=n;}
+    addEventListener('keydown',e=>{const map={ArrowUp:'up',w:'up',W:'up',ArrowDown:'down',s:'down',S:'down',ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right'};if(map[e.key]){e.preventDefault();steer(map[e.key])}});
+    document.querySelectorAll('[data-dir]').forEach(b=>b.addEventListener('pointerdown',()=>steer(b.dataset.dir)));
+    document.querySelector('#startBtn').onclick=()=>{document.querySelector('#startScreen').classList.add('hidden');document.querySelector('#systemStatus').textContent='SYSTEM ACTIVE';reset()};
+    snake=[];draw();
+  </script>
+</body>
+</html>
